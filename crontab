@@ -1,7 +1,13 @@
-# Установка: crontab crontab   (нужен cronie). Время — UTC.
+# Установка из папки collector (нужен cronie). Время — UTC.
 # flock -w: следующий прогон ждёт окончания предыдущего (до 6 ч), а не пропускается.
 CRON_TZ=UTC
-0 0,6,12,18 * * * cd /mnt/d/Projects/sut/fly-light/collector && flock -w 21600 /tmp/flylite-collector.lock uv run --env-file .env collector sweep near >> data/collector.log 2>&1
-0 1 * * *         cd /mnt/d/Projects/sut/fly-light/collector && flock -w 21600 /tmp/flylite-collector.lock uv run --env-file .env collector sweep far  >> data/collector.log 2>&1
-0 4 * * 1         cd /mnt/d/Projects/sut/fly-light/collector && flock -w 21600 /tmp/flylite-collector.lock uv run --env-file .env collector routes     >> data/collector.log 2>&1
-30 */6 * * *      /mnt/d/Projects/sut/fly-light/collector/backup.sh >> /mnt/d/Projects/sut/fly-light/collector/data/collector.log 2>&1
+# Путь подставляется при установке: sed "s|^COLLECTOR_DIR=.*|COLLECTOR_DIR=$PWD|" crontab | crontab -
+COLLECTOR_DIR=/path/to/collector
+0 0,6,12,18 * * * cd "$COLLECTOR_DIR" && flock -w 21600 /tmp/flylite-collector.lock uv run --env-file .env collector sweep near >> data/collector.log 2>&1
+0 1 * * *         cd "$COLLECTOR_DIR" && flock -w 21600 /tmp/flylite-collector.lock uv run --env-file .env collector sweep far  >> data/collector.log 2>&1
+0 4 * * 1         cd "$COLLECTOR_DIR" && flock -w 21600 /tmp/flylite-collector.lock uv run --env-file .env collector routes     >> data/collector.log 2>&1
+# Погода, METAR/TAF, ЦБ: секунды на прогон, другие API — без общей блокировки со sweep
+5 * * * *         cd "$COLLECTOR_DIR" && uv run collector metar   >> data/collector.log 2>&1
+30 2 * * *        cd "$COLLECTOR_DIR" && uv run collector weather >> data/collector.log 2>&1
+30 10 * * *       cd "$COLLECTOR_DIR" && uv run collector cbr     >> data/collector.log 2>&1
+30 */6 * * *      "$COLLECTOR_DIR"/backup.sh >> "$COLLECTOR_DIR"/data/collector.log 2>&1

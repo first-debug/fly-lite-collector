@@ -1,0 +1,12 @@
+# Пользовательская служба: cp alloy/flylite-alloy.service ~/.config/systemd/user/ && systemctl --user enable --now flylite-alloy
+[Unit]
+Description=FlyLite: логи сборщика в Grafana Cloud
+After=network-online.target
+
+[Service]
+EnvironmentFile=%h/.local/share/flylite-alloy/.env
+ExecStart=/usr/bin/alloy run %h/.local/share/flylite-alloy/config.alloy --storage.path=%h/.local/share/flylite-alloy --server.http.listen-addr=127.0.0.1:12345
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

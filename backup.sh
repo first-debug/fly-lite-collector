@@ -13,7 +13,7 @@ done
 export RCLONE_CONFIG_S3_TYPE=s3 RCLONE_CONFIG_S3_PROVIDER=Other RCLONE_CONFIG_S3_ENV_AUTH=true \
   RCLONE_CONFIG_S3_ENDPOINT="${S3_ENDPOINT:-https://storage.yandexcloud.net}" \
   RCLONE_CONFIG_S3_REGION="${S3_REGION:-ru-central1}"
-# copy, а не sync: удалённое локально в бакете остаётся. 7d — догоняем, если ПК был выключен.
+# copy, а не sync: удалённое локально в бакете остаётся. 30d — догоняем, если ПК был выключен.
 # --size-only: не перезаписываем объекты ради даты изменения (ключу хватает прав только на загрузку).
-exec rclone copy data/raw "s3:$S3_BUCKET/raw" --max-age 7d --no-traverse --size-only \
+exec rclone copy data/raw "s3:$S3_BUCKET/raw" --max-age 30d --no-traverse --size-only \
   --exclude '*.part' --s3-no-check-bucket -v

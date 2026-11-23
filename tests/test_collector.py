@@ -6,7 +6,7 @@ import httpx
 import pytest
 import respx
 
-from collector import routes, sweep
+from collector import routes, sources, sweep
 from collector.client import BASE_URL, AuthError, Client
 
 URL = BASE_URL + sweep.PATH
@@ -97,3 +97,30 @@ def test_sweep_keeps_data_when_run_aborts(tmp_path):
     [out] = tmp_path.rglob("*.jsonl.gz")
     assert [json.loads(l)["http_status"] for l in gzip.open(out, "rt")] == [200]
     assert not list(tmp_path.rglob("*.part"))
+
+
+def test_domestic_airports_map_icao():
+    airports = [{"code": "SVO", "city_code": "MOW", "country_code": "RU", "flightable": True, "coordinates": {"lat": 55.9, "lon": 37.4}},
+                {"code": "PEX", "city_code": "PEX", "country_code": "RU", "flightable": True, "coordinates": {"lat": 65.1, "lon": 57.1}},
+                {"code": "IST", "city_code": "IST", "country_code": "TR", "flightable": True, "coordinates": {"lat": 41, "lon": 28}}]
+    rs = [{"departure_airport_iata": "SVO", "arrival_airport_iata": "PEX"}, {"departure_airport_iata": "SVO", "arrival_airport_iata": "IST"}]
+    stations = [{"iataId": "SVO", "icaoId": "UUEE", "country": "RU"}]
+    assert routes.domestic_airports(airports, rs, stations) == [("PEX", "-", 65.1, 57.1), ("SVO", "UUEE", 55.9, 37.4)]
+
+
+def test_load_airports_missing_or_broken(tmp_path):
+    with pytest.raises(SystemExit, match="collector routes"):
+        routes.load_airports(tmp_path)
+    (tmp_path / "airports.txt").write_text("SVO UUEE x 37.4\n")
+    with pytest.raises(SystemExit, match="испорчен"):
+        routes.load_airports(tmp_path)
+
+
+@respx.mock
+def test_metar_taf_skip_airports_without_icao(tmp_path):
+    route = respx.get(url__regex=r"https://aviationweather.gov/api/data/(metar|taf)").mock(return_value=httpx.Response(200, json=[{"icaoId": "UUEE"}]))
+    outs = sources.metar_taf([("SVO", "UUEE", 55.9, 37.4), ("PEX", "-", 65.1, 57.1)], tmp_path)
+    assert route.calls[0].request.url.params["ids"] == "UUEE"
+    assert route.calls[0].request.url.params["hours"] == "2" and "hours" not in route.calls[1].request.url.params
+    assert [o.parts[-5] for o in outs] == ["metar", "taf"]
+    assert (tmp_path / "last_success_taf").exists()
