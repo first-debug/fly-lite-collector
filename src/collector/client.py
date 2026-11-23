@@ -14,8 +14,9 @@ class AuthError(Exception):
 
 
 class Client:
-    def __init__(self, token: str, rate_per_min: float = 50, sleep=time.sleep):
-        self.http = httpx.Client(base_url=BASE_URL, headers={"X-Access-Token": token}, timeout=30)
+    def __init__(self, token: str | None, rate_per_min: float = 50, sleep=time.sleep, base_url: str = BASE_URL):
+        headers = {"X-Access-Token": token} if token else {}
+        self.http = httpx.Client(base_url=base_url, headers=headers, timeout=30)
         self.interval = 60 / rate_per_min
         self.sleep = sleep
         self._next_at = 0.0
