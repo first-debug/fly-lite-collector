@@ -121,5 +121,6 @@ def test_metar_taf_skip_airports_without_icao(tmp_path):
     route = respx.get(url__regex=r"https://aviationweather.gov/api/data/(metar|taf)").mock(return_value=httpx.Response(200, json=[{"icaoId": "UUEE"}]))
     outs = sources.metar_taf([("SVO", "UUEE", 55.9, 37.4), ("PEX", "-", 65.1, 57.1)], tmp_path)
     assert route.calls[0].request.url.params["ids"] == "UUEE"
+    assert route.calls[0].request.url.params["hours"] == "2" and "hours" not in route.calls[1].request.url.params
     assert [o.parts[-5] for o in outs] == ["metar", "taf"]
     assert (tmp_path / "last_success_taf").exists()

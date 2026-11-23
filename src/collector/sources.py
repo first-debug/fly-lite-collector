@@ -21,8 +21,9 @@ def weather(airports, data_dir: Path) -> Path:
 def metar_taf(airports, data_dir: Path) -> list[Path]:
     ids = ",".join(a[1] for a in airports if a[1] != "-")
     client = Client(None, base_url=AVIATIONWEATHER)
-    return [snapshot.run("aviationweather", kind, kind, client, f"/api/data/{kind}", [{"ids": ids, "format": "json"}], data_dir)
-            for kind in ("metar", "taf")]
+    # METAR в РФ каждые 30 мин + SPECI: окно 2 ч при опросе раз в час, повторы убираются при разборе
+    return [snapshot.run("aviationweather", kind, kind, client, f"/api/data/{kind}", [{"ids": ids, "format": "json", **extra}], data_dir)
+            for kind, extra in (("metar", {"hours": 2}), ("taf", {}))]
 
 
 def cbr(data_dir: Path) -> Path:
