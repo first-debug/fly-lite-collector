@@ -4,8 +4,8 @@ Description=FlyLite: логи сборщика в Grafana Cloud
 After=network-online.target
 
 [Service]
-EnvironmentFile=/mnt/d/Projects/sut/fly-light/collector/.env
-ExecStart=/usr/bin/alloy run /mnt/d/Projects/sut/fly-light/collector/alloy/config.alloy --storage.path=%h/.local/share/flylite-alloy --server.http.listen-addr=127.0.0.1:12345
+EnvironmentFile=%h/.local/share/flylite-alloy/.env
+ExecStart=/usr/bin/alloy run %h/.local/share/flylite-alloy/config.alloy --storage.path=%h/.local/share/flylite-alloy --server.http.listen-addr=127.0.0.1:12345
 Restart=on-failure
 
 [Install]

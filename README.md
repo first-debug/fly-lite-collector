@@ -15,7 +15,7 @@ uv run pytest
 Настройки: `TRAVELPAYOUTS_TOKEN`, `DATA_DIR` (по умолчанию `data`), `RATE_PER_MIN` (по умолчанию 50), `LOG_LEVEL` (по умолчанию INFO).
 Итог прогона — строка JSON в `data/collector.log`; `data/last_success_<near|far>` — последний прогон с ошибками ≤ 20%.
 
-Расписание: `sudo pacman -S cronie && sudo systemctl enable --now cronie && crontab crontab`.
+Расписание: `sudo pacman -S cronie && sudo systemctl enable --now cronie && sed "s|^COLLECTOR_DIR=.*|COLLECTOR_DIR=$PWD|" crontab | crontab -` (из папки `collector`).
 
 Копия в S3: `./backup.sh` (нужен `rclone`) копирует `data/raw` в бакет за последние 7 дней, каждые 6 ч по crontab.
 В `.env`: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET` (необязательно `S3_ENDPOINT`, `S3_REGION`, по умолчанию Yandex Object Storage).
@@ -26,12 +26,15 @@ Alloy читает `data/collector.log` и отправляет строки в 
 
 ```bash
 sudo pacman -S grafana-alloy
+mkdir -p ~/.local/share/flylite-alloy ~/.config/systemd/user
+ln -sf "$PWD/.env" ~/.local/share/flylite-alloy/.env
+ln -sf "$PWD/alloy/config.alloy" ~/.local/share/flylite-alloy/config.alloy
 cp alloy/flylite-alloy.service ~/.config/systemd/user/
 systemctl --user daemon-reload && systemctl --user enable --now flylite-alloy
 loginctl enable-linger "$USER"   # служба работает и без входа в систему
 ```
 
-В `.env`: `LOKI_URL` (…/loki/api/v1/push), `LOKI_USER` (числовой User ID), `LOKI_TOKEN` (токен с правом `logs:write`).
+Команды выполняются из папки `collector`. В `.env`: `LOKI_LOG_FILE` (абсолютный путь к `data/collector.log`), `LOKI_URL` (…/loki/api/v1/push), `LOKI_USER` (числовой User ID), `LOKI_TOKEN` (токен с правом `logs:write`).
 
 Алерты в Grafana (Alerting → New alert rule, источник — Loki):
 

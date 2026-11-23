@@ -1,4 +1,4 @@
-// Отправка data/collector.log в Grafana Cloud Loki. Адрес и ключ — в collector/.env.
+// Отправка лога сборщика в Grafana Cloud Loki. Путь к логу, адрес и ключ — в collector/.env.
 local.file_match "collector" {
   path_targets = [{
     "__path__" = sys.env("LOKI_LOG_FILE"),
