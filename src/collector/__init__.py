@@ -1,5 +1,6 @@
 import logging
 import os
+import signal
 import sys
 from pathlib import Path
 
@@ -8,7 +9,11 @@ USAGE = "usage: collector routes | collector sweep near|far | collector weather 
 
 def main() -> None:
     from . import routes, sources, sweep
+
     from .client import Client
+
+    # SIGTERM (выключение ПК) → обычный выход: finally дописывает gzip и снимает .part
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(1))
 
     logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"), format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)  # без строки на каждый запрос

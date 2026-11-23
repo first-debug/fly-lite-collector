@@ -23,7 +23,7 @@ uv run pytest
 
 Расписание: `sudo pacman -S cronie && sudo systemctl enable --now cronie && sed "s|^COLLECTOR_DIR=.*|COLLECTOR_DIR=$PWD|" crontab | crontab -` (из папки `collector`).
 
-Копия в S3: `./backup.sh` (нужен `rclone`) копирует `data/raw` в бакет за последние 7 дней, каждые 6 ч по crontab.
+Копия в S3: `./backup.sh` (нужен `rclone`) копирует `data/raw` в бакет за последние 30 дней, каждые 6 ч по crontab.
 В `.env`: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET` (необязательно `S3_ENDPOINT`, `S3_REGION`, по умолчанию Yandex Object Storage).
 
 ## Логи в Grafana Cloud
