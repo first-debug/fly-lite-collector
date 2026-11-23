@@ -1,0 +1,34 @@
+// Отправка data/collector.log в Grafana Cloud Loki. Адрес и ключ — в collector/.env.
+local.file_match "collector" {
+  path_targets = [{
+    "__path__" = sys.env("LOKI_LOG_FILE"),
+    "job"      = "collector",
+    "host"     = constants.hostname,
+  }]
+}
+
+loki.source.file "collector" {
+  targets    = local.file_match.collector.targets
+  forward_to = [loki.process.collector.receiver]
+}
+
+// Уровень (INFO/WARNING/ERROR) — в метку; подходит и для строк сборщика, и для строк rclone.
+loki.process "collector" {
+  stage.regex {
+    expression = "^\\S+ \\S+ (?P<level>[A-Z]+)\\b"
+  }
+  stage.labels {
+    values = { level = "" }
+  }
+  forward_to = [loki.write.cloud.receiver]
+}
+
+loki.write "cloud" {
+  endpoint {
+    url = sys.env("LOKI_URL")
+    basic_auth {
+      username = sys.env("LOKI_USER")
+      password = sys.env("LOKI_TOKEN")
+    }
+  }
+}
