@@ -45,8 +45,10 @@ def run(tier: str, client: Client, pairs, data_dir: Path, now: datetime | None =
                         log.info("%s: %d/%d запросов, ошибок %d, %d с", run_id, total, planned, errors, time.monotonic() - started)
     finally:
         part.rename(out)
-        log.info("итог %s", json.dumps({"run_id": run_id, "requests": total, "errors": errors,
-                                         "seconds": round(time.monotonic() - started), "file": str(out)}))
-    if total and errors / total <= 0.2:
+        error_share = round(errors / total, 3) if total else 1.0  # 0 запросов — тоже провал
+        log.info("итог %s", json.dumps({"run_id": run_id, "tier": tier, "requests": total, "errors": errors,
+                                         "error_share": error_share, "seconds": round(time.monotonic() - started),
+                                         "file": str(out)}))
+    if error_share <= 0.2:
         (data_dir / f"last_success_{tier}").write_text(run_id + "\n")
     return out
