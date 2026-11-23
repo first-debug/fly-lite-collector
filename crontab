@@ -1,0 +1,6 @@
+# Установка: crontab crontab   (нужен cronie). Время — UTC.
+# flock -w: следующий прогон ждёт окончания предыдущего (до 6 ч), а не пропускается.
+CRON_TZ=UTC
+0 0,6,12,18 * * * cd /mnt/d/Projects/sut/fly-light/collector && flock -w 21600 /tmp/flylite-collector.lock uv run --env-file .env collector sweep near >> data/collector.log 2>&1
+0 1 * * *         cd /mnt/d/Projects/sut/fly-light/collector && flock -w 21600 /tmp/flylite-collector.lock uv run --env-file .env collector sweep far  >> data/collector.log 2>&1
+0 4 * * 1         cd /mnt/d/Projects/sut/fly-light/collector && flock -w 21600 /tmp/flylite-collector.lock uv run --env-file .env collector routes     >> data/collector.log 2>&1
