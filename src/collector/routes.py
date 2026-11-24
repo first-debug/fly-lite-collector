@@ -62,7 +62,11 @@ def update(data_dir: Path) -> int:
 def load(data_dir: Path) -> list[tuple[str, str]]:
     path = data_dir / "routes.txt"
     if not path.is_file():
-        raise SystemExit(f"{path} не найден: сначала запустите `collector routes`")
+        log.info(f"{path} не найден: запуск получения списка направлений")
+        update(data_dir)
+        if not path.is_file():
+            raise SystemExit(f"не удалось получить список направлений")
+
     pairs = [tuple(line.split()) for line in path.read_text().splitlines() if line.strip()]
     if not pairs or any(len(p) != 2 for p in pairs):
         raise SystemExit(f"{path} пуст или испорчен: перезапустите `collector routes`")
