@@ -17,6 +17,10 @@ loki.process "collector" {
   stage.regex {
     expression = "^\\S+ \\S+ (?P<level>[A-Z]+)\\b"
   }
+  stage.template {
+    source   = "level"
+    template = "{{ if .Value }}{{ .Value }}{{ else }}ERROR{{ end }}"
+  }
   stage.labels {
     values = { level = "" }
   }
