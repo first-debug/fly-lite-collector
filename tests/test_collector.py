@@ -68,9 +68,12 @@ def test_sweep_writes_every_response(tmp_path):
     assert not (tmp_path / "last_success_near").exists()  # половина ошибок
 
 
-def test_load_routes_missing_or_broken(tmp_path):
-    with pytest.raises(SystemExit, match="collector routes"):
+def test_load_routes_missing_or_broken(tmp_path, monkeypatch):
+    monkeypatch.setattr(routes, "update", lambda d: None)  # без сети: список не скачался
+    with pytest.raises(SystemExit, match="не удалось получить"):
         routes.load(tmp_path)
+    monkeypatch.setattr(routes, "update", lambda d: (d / "routes.txt").write_text("LED MOW\n"))
+    assert routes.load(tmp_path) == [("LED", "MOW")]
     (tmp_path / "routes.txt").write_text("MOW\n")
     with pytest.raises(SystemExit, match="испорчен"):
         routes.load(tmp_path)
