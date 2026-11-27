@@ -124,3 +124,24 @@ def test_metar_taf_skip_airports_without_icao(tmp_path):
     assert route.calls[0].request.url.params["hours"] == "2" and "hours" not in route.calls[1].request.url.params
     assert [o.parts[-5] for o in outs] == ["metar", "taf"]
     assert (tmp_path / "last_success_taf").exists()
+
+
+def test_push_sends_once_and_retries_failed(tmp_path, monkeypatch):
+    from collector import push
+
+    raw = tmp_path / "raw" / "cbr" / "XML_daily" / "2026" / "11" / "27"
+    raw.mkdir(parents=True)
+    ok, bad = raw / "a.jsonl.gz", raw / "b.jsonl.gz"
+    ok.write_bytes(b"")
+    bad.write_bytes(b"")
+    fake = tmp_path / "push.sh"  # вместо утилиты push: падает на b.jsonl.gz
+    fake.write_text('#!/bin/sh\ncase "$2" in *b.jsonl.gz) echo down >&2; exit 1;; esac\necho ok >&2\n')
+    fake.chmod(0o755)
+
+    assert push.push(tmp_path, push.pending(tmp_path)) == 0  # без INGEST_PUSH ничего не шлём
+    monkeypatch.setenv("INGEST_PUSH", str(fake))
+    assert push.push(tmp_path, push.pending(tmp_path)) == 1
+    assert (tmp_path / "pushed.txt").read_text() == "cbr/XML_daily/2026/11/27/a.jsonl.gz\n"
+    assert push.push(tmp_path, push.pending(tmp_path)) == 0  # a уже отправлен, b снова не ушёл
+    monkeypatch.setenv("INGEST_PUSH", str(tmp_path / "нет-такого"))
+    assert push.push(tmp_path, [bad]) == 0  # нет утилиты — предупреждение, а не падение

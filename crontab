@@ -11,7 +11,9 @@ UV_PATH=/path/to/uv
 0 1 * * *         cd "$COLLECTOR_DIR" && flock -w 21600 /tmp/flylite-collector.lock "$UV_PATH" run --env-file .env collector sweep far  >> data/collector.log 2>&1
 0 4 * * 1         cd "$COLLECTOR_DIR" && flock -w 21600 /tmp/flylite-collector.lock "$UV_PATH" run --env-file .env collector routes     >> data/collector.log 2>&1
 # Погода, METAR/TAF, ЦБ: секунды на прогон, другие API — без общей блокировки со sweep
-5 * * * *         cd "$COLLECTOR_DIR" && "$UV_PATH" run collector metar   >> data/collector.log 2>&1
-30 2 * * *        cd "$COLLECTOR_DIR" && "$UV_PATH" run collector weather >> data/collector.log 2>&1
-30 10 * * *       cd "$COLLECTOR_DIR" && "$UV_PATH" run collector cbr     >> data/collector.log 2>&1
+5 * * * *         cd "$COLLECTOR_DIR" && "$UV_PATH" run --env-file .env collector metar   >> data/collector.log 2>&1
+30 2 * * *        cd "$COLLECTOR_DIR" && "$UV_PATH" run --env-file .env collector weather >> data/collector.log 2>&1
+30 10 * * *       cd "$COLLECTOR_DIR" && "$UV_PATH" run --env-file .env collector cbr     >> data/collector.log 2>&1
+# Досылка в Ingest того, что не ушло сразу (Ingest был недоступен)
+45 * * * *        cd "$COLLECTOR_DIR" && "$UV_PATH" run --env-file .env collector push >> data/collector.log 2>&1
 30 */6 * * *      "$COLLECTOR_DIR"/backup.sh >> "$COLLECTOR_DIR"/data/collector.log 2>&1

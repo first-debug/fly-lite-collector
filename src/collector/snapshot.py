@@ -5,6 +5,7 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
+from . import push
 from .client import Client
 
 log = logging.getLogger(__name__)
@@ -40,4 +41,5 @@ def run(source: str, endpoint: str, label: str, client: Client, path: str, param
                                          "file": str(out)}))
     if error_share <= 0.2:
         (data_dir / f"last_success_{label}").write_text(run_id + "\n")
+    push.push(data_dir, [out])
     return out

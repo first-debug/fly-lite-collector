@@ -4,11 +4,11 @@ import signal
 import sys
 from pathlib import Path
 
-USAGE = "usage: collector routes | collector sweep near|far | collector weather | collector metar | collector cbr"
+USAGE = "usage: collector routes | collector sweep near|far | collector weather | collector metar | collector cbr | collector push"
 
 
 def main() -> None:
-    from . import routes, sources, sweep
+    from . import push, routes, sources, sweep
 
     from .client import Client
 
@@ -31,5 +31,8 @@ def main() -> None:
             sources.metar_taf(routes.load_airports(data_dir), data_dir)
         case ["cbr"]:
             sources.cbr(data_dir)
+        case ["push"]:
+            files = push.pending(data_dir)
+            logging.info("push: отправлено %d из %d файлов", push.push(data_dir, files), len(files))
         case _:
             sys.exit(USAGE)

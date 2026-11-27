@@ -35,6 +35,11 @@ sed "s|^COLLECTOR_DIR=.*|COLLECTOR_DIR=$PWD|; \
 > [!ВАЖНО]
 > `uv` должен быть доступен для всех пользователей!
 
+Отправка в Ingest API: после записи каждый файл уходит в `../ingest` утилитой `push`, если в `.env` заданы
+`INGEST_PUSH` (путь к собранной `ingest/target/release/push`), `INGEST_TOKEN` и при необходимости `INGEST_ADDR`
+(по умолчанию `http://127.0.0.1:50051`). Отправленные пути пишутся в `data/pushed.txt`; что не ушло,
+досылает `collector push` раз в час по crontab. Без `INGEST_PUSH` сборщик работает как раньше, только локально.
+
 Копия в S3: `./backup.sh` (нужен `rclone`) копирует `data/raw` в бакет за последние 30 дней, каждые 6 ч по crontab.
 В `.env`: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET` (необязательно `S3_ENDPOINT`, `S3_REGION`, по умолчанию Yandex Object Storage).
 
